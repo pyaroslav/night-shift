@@ -1,0 +1,22 @@
+[
+ {
+  "name": "lab-26ai",
+  "container": "w2-awr-probe",
+  "sid": "FREE",
+  "alert": "/opt/oracle/diag/rdbms/free/FREE/trace/alert_FREE.log",
+  "listener": "/opt/oracle/diag/tnslsnr/*/listener/trace/listener.log"
+ },
+ {
+  "name": "lab-se2",
+  "container": "w2-se2",
+  "sid": "ORCLCDB",
+  "alert": "/opt/oracle/diag/rdbms/orclcdb/ORCLCDB/trace/alert_ORCLCDB.log",
+  "listener": "/opt/oracle/diag/tnslsnr/*/listener/trace/listener.log"
+ },
+ {
+  "name": "lab-offsite",
+  "container": "ns-offsite-gone",
+  "sid": "ORCL",
+  "alert": "/opt/oracle/diag/rdbms/orcl/ORCL/trace/alert_ORCL.log"
+ }
+]

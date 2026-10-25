@@ -1,0 +1,13 @@
+[project]
+name = "night-shift"
+version = "0.1.0"
+description = "Reads your Oracle alert and listener logs overnight with a local model and Temporal, and hands you a two-line brief in the morning."
+requires-python = ">=3.10"
+license = {text = "MIT"}
+dependencies = ["temporalio>=1.8", "requests"]
+
+[project.scripts]
+night-shift = "nightshift.__main__:main"
+
+[tool.setuptools]
+packages = ["nightshift"]
