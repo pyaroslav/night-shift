@@ -1,0 +1,15 @@
+# systemd --user unit: the local Temporal server, so the 6 AM schedule survives a reboot.
+#   cp contrib/*.service ~/.config/systemd/user/ && systemctl --user daemon-reload
+#   systemctl --user enable --now night-shift-server night-shift-worker
+#   loginctl enable-linger $USER   # keep them running when you're logged out
+# Edit WorkingDirectory to where you cloned night-shift.
+[Unit]
+Description=Night Shift: local Temporal server
+
+[Service]
+WorkingDirectory=%h/night-shift
+ExecStart=%h/night-shift/.venv/bin/night-shift server
+Restart=on-failure
+
+[Install]
+WantedBy=default.target

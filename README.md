@@ -31,8 +31,8 @@ I built it because my lab database died on a Tuesday afternoon and I found out o
 
 1. **Rules sort the night** ([`nightshift/logs.py`](nightshift/logs.py)). Alert log entries (12c+ and 11g timestamps) and listener lines are matched against about twenty plain patterns: instance terminations, ORA-600, corruption, a stuck archiver, a full tablespace, deadlocks, failed jobs, and so on. Repeats are folded together: one outage that writes four lines counts as one, and a job that fails every ten minutes is one finding with a count. Routine lines (log switches, resizes, scheduler windows) are counted, never reported. Any ORA- code that matches no rule still shows up as "Other Oracle error", so a new problem can't vanish.
 2. **The quiet is checked too** ([`nightshift/collect.py`](nightshift/collect.py)). Is pmon running (`ora_pmon_SID` up to 21c, `db_pmon_SID` from 23ai on)? Did the alert log write anything all night? A database that crashed on Tuesday writes nothing on Wednesday, so silence is a finding.
-3. **Gemma writes two lines** ([`nightshift/brief.py`](nightshift/brief.py)). It gets a ~1,200-character digest, not the log. Its answer is checked: exactly two lines, every number has to be in the digest, and every database with a critical finding has to be named. It gets three tries, and then a plain template takes over. The list under the two lines comes straight from the rules, so the model can't drop an outage from it.
-4. **Temporal delivers it** ([`nightshift/flow.py`](nightshift/flow.py)). Each database is read in its own activity, with retries (15 s, 30 s, 60 s). A host that stays unreachable becomes a "Couldn't read the logs" finding instead of a crash. If the worker dies halfway, the run continues where it stopped when the worker comes back. If Ollama is down all night, the template writes the brief. A Temporal Schedule starts it every morning.
+3. **Gemma writes two lines** ([`nightshift/brief.py`](nightshift/brief.py)). It gets a small JSON digest (about 500 characters a night; the whole prompt is about 1,200), not the log. Its answer is checked: exactly two lines, every number has to be in the digest, and every database with a critical finding has to be named. It gets three tries, and then a plain template takes over. The list under the two lines comes straight from the rules, so the model can't drop an outage from it.
+4. **Temporal delivers it** ([`nightshift/flow.py`](nightshift/flow.py)). Each database is read in its own activity, with retries (15 s, 30 s, 60 s). A host that stays unreachable becomes a "Couldn't read the logs" finding instead of a crash. If the worker dies halfway, the run continues where it stopped when the worker comes back. If Ollama is down all night, the template writes the brief. A Temporal Schedule starts it every morning. [`tests/test_flow.py`](tests/test_flow.py) checks the unreachable-host and model-down paths on Temporal's time-skipping test server.
 
 ![Temporal timeline: two databases read in seconds, the unreachable one retried four times while the worker was killed and restarted, then the summary and delivery](docs/timeline.png)
 
@@ -51,6 +51,8 @@ night-shift worker                         # leave it running
 night-shift schedule --at 06:00 --tz America/Chicago
 night-shift run                            # one night through Temporal, now
 ```
+
+To keep the server and worker running across reboots, [`contrib/`](contrib) has two systemd user units. If the machine is asleep at 6 AM, the Schedule's catch-up window starts the missed run when it wakes up.
 
 `night-shift server` looks for the Temporal CLI in `.temporal-bin/` or on your PATH. The Python SDK can download it for you: `python -c "import asyncio; from temporalio.testing import WorkflowEnvironment as W; asyncio.run(W.start_local(download_dest_dir='.temporal-bin'))"`.
 

@@ -1,0 +1,15 @@
+# systemd --user unit: the Night Shift worker (see night-shift-server.service for setup).
+[Unit]
+Description=Night Shift: worker
+After=night-shift-server.service
+Requires=night-shift-server.service
+
+[Service]
+WorkingDirectory=%h/night-shift
+ExecStartPre=/bin/sleep 5
+ExecStart=%h/night-shift/.venv/bin/night-shift worker
+Restart=always
+RestartSec=30
+
+[Install]
+WantedBy=default.target
