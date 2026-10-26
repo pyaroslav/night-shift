@@ -84,6 +84,8 @@ RULES = [
      [r"ORA-0*20\b", r"ORA-0*18\b"]),
     ("listener_lost_db", "critical", "Listener lost the database service", "Check the instance is up and registered.",
      [r"\* service_died \*"]),
+    ("instance_started", "attention", "Instance started", "Check the restart was planned; the entries just before it say why it stopped.",
+     [r"Starting ORACLE instance"]),
     ("deadlock", "attention", "Deadlocks", "Read the trace file: it names both sessions and the SQL.",
      [r"ORA-0*60\b", r"Deadlock detected"]),
     ("checkpoint", "attention", "Checkpoint not complete", "Redo logs are too small or too few for the load.",
@@ -132,7 +134,7 @@ class Finding:
 
 # One outage writes several lines (state dump, "terminated by PMON", listener losing the service).
 # For these, lines less than 10 minutes apart are one incident.
-INCIDENTS = {"instance_down", "process_died", "redo_missing", "listener_lost_db", "archiver_stuck"}
+INCIDENTS = {"instance_started", "instance_down", "process_died", "redo_missing", "listener_lost_db", "archiver_stuck"}
 
 
 def group(entries: list[Entry], mute: list[str] = ()) -> tuple[list[Finding], int]:
