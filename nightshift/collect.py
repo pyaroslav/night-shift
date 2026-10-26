@@ -10,6 +10,7 @@ import subprocess
 from datetime import datetime, timedelta, timezone
 
 from .logs import alert_entries, group, listener_entries
+from .traces import deadlock
 
 TAIL_BYTES = 50_000_000  # a very chatty night still fits; older lines are outside the window anyway
 
@@ -26,6 +27,23 @@ def read(target: dict, path: str) -> str:
             raise RuntimeError(f"{target['name']}: can't read {path}: {err.strip()[:200]}")
         return out
     return "".join(open(p, errors="replace").read()[-TAIL_BYTES:] for p in sorted(glob.glob(path)))
+
+
+def explain_deadlock(target: dict, paths: list[str]):
+    """The first readable deadlock trace of the night, parsed; None if there isn't one."""
+    for p in paths[:3]:
+        try:
+            if target.get("container"):
+                rc, out, _ = _sh(target["container"], f"head -c 200000 {shlex.quote(p)}")
+                text = out if rc == 0 else ""
+            else:
+                text = open(p, errors="replace").read(200_000)
+        except (OSError, subprocess.SubprocessError):
+            continue
+        d = deadlock(text)
+        if d:
+            return d
+    return None
 
 
 def alive(target: dict):
@@ -64,7 +82,8 @@ def digest(target: dict, since: datetime, until: datetime) -> dict:
         "log_lines": len(entries), "routine": routine,
         "last_alert_log_entry": f"{last:%Y-%m-%d %H:%M UTC}" if last else "none",
         "findings": [{"severity": f.severity, "what": f.label, "count": f.count, "first": f.first, "last": f.last,
-                      "codes": sorted(f.detail)[:6], "sample": f.sample, "do": f.advice} for f in findings],
+                      "codes": sorted(f.detail)[:6], "sample": f.sample, "do": f.advice,
+                      **({"deadlock": explain_deadlock(target, f.traces)} if f.traces else {})} for f in findings],
     }
     if target.get("alert") and n_alert == 0 and up is not False:
         # Oracle writes to the alert log every few hours even when idle (log switches, jobs, stats).

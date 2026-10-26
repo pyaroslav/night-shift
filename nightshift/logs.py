@@ -9,6 +9,8 @@ import re
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 
+from .traces import TRACE_PATH
+
 ISO = re.compile(r"^(\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d)(?:\.\d+)?([+-]\d\d:\d\d|Z)?\s*$")
 OLD = re.compile(r"^(?:Mon|Tue|Wed|Thu|Fri|Sat|Sun) (\w{3} +\d+ \d\d:\d\d:\d\d \d{4})\s*$")  # 11g alert log
 LSNR = re.compile(r"^(\d\d-[A-Z]{3}-\d{4} \d\d:\d\d:\d\d)(?::\d+)? \* ?(.*)$")  # listener.log line
@@ -125,6 +127,7 @@ class Finding:
     last: str = ""
     sample: str = ""
     detail: set = field(default_factory=set)  # job names, error codes: what tells two findings apart
+    traces: list = field(default_factory=list)  # trace files the entries point to (deadlocks)
 
 
 # One outage writes several lines (state dump, "terminated by PMON", listener losing the service).
@@ -166,6 +169,10 @@ def group(entries: list[Entry], mute: list[str] = ()) -> tuple[list[Finding], in
             lines = e.text.splitlines()
             hit = [ln for ln in lines if any(p.search(ln) for p in pats) or ORA.search(ln)]
             f.sample = " | ".join((hit or lines)[:3])[:240]
+        if key == "deadlock":
+            t = TRACE_PATH.search(e.text)
+            if t and t.group(1) not in f.traces:
+                f.traces.append(t.group(1))
         if sub:
             f.detail.add(sub)
         f.detail.update(c for c in codes if c not in ("ORA-06512",))

@@ -1,0 +1,45 @@
+DEADLOCK DETECTED ( ORA-00060 )
+See Note 60.1 at My Oracle Support for Troubleshooting ORA-60 Errors
+
+[Transaction Deadlock]
+ 
+The following deadlock is not an ORACLE error. It is a
+deadlock due to user error in the design of an application
+or from issuing incorrect ad-hoc SQL. The following
+information may aid in determining the deadlock:
+ 
+Deadlock graph:
+                                          ------------Blocker(s)-----------  ------------Waiter(s)------------
+Resource Name                             process session holds waits serial  process session holds waits serial
+TX-000C0004-00024FB3-BDAECB76-00000000         85     230     X         1200      76      42           X  16851
+TX-00090009-0002D915-BDAECB76-00000000         76      42     X        16851      85     230           X   1200
+ 
+----- Information for waiting sessions -----
+Session 230:
+Holds resource TX-000C0004-00024FB3-BDAECB76-00000000 acquired 4 seconds ago.
+  sid: 230 ser: 1200 audsid: 850309 user: 136/LAB
+  pdb: 3/FREEPDB1
+    flags: (0x41) USR/- flags2: (0x40009) -/-/INC
+    flags_idl: (0x1) status: BSY/-/-/- kill: -/-/-/-/-
+  pid: 85 ospid: 56408
+  O/S info: user: oracle, term: UNKNOWN
+    image: oracle@5c63e1051e15
+  client details:
+    ospid: 3715093
+  current SQL (id: 18296191607516540510):
+  update ns_dl set v = 2 where id = 1
+ 
+Session 42:
+Holds resource TX-00090009-0002D915-BDAECB76-00000000 acquired 4 seconds ago.
+  sid: 42 ser: 16851 audsid: 850308 user: 136/LAB
+  pdb: 3/FREEPDB1
+    flags: (0x41) USR/- flags2: (0x40009) -/-/INC
+    flags_idl: (0x1) status: BSY/-/-/- kill: -/-/-/-/-
+  pid: 76 ospid: 56406
+  O/S info: user: oracle, term: UNKNOWN
+    image: oracle@5c63e1051e15
+  client details:
+    ospid: 3715093
+  current SQL (id: 15646733265209206072):
+  update ns_dl set v = 2 where id = 2
+ 

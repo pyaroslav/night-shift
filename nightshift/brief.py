@@ -104,7 +104,12 @@ def render(digests: list[dict], s: dict, took: str = "") -> str:
             mark = "🔴" if f["severity"] == "critical" else "🟡"
             when = f["first"] if f["count"] == 1 else f"{f['count']}× {f['first']} → {f['last']}"
             codes = f" ({', '.join(f['codes'])})" if f["codes"] else ""
-            out += [f"- {mark} **{f['what']}**{codes}, {when}. {f['do']}", f"  `{f['sample'][:160]}`"]
+            dl = f.get("deadlock")
+            if dl:  # read from the trace file: what actually deadlocked, instead of "read the trace"
+                out.append(f"- {mark} **{f['what']}**{codes}, {when}. {dl['kind'][0].upper() + dl['kind'][1:]}. {dl['fix']}")
+                out += [f"  - session {s['sid']} ({s['user']}): `{s['sql']}`" for s in dl["sessions"]]
+            else:
+                out += [f"- {mark} **{f['what']}**{codes}, {when}. {f['do']}", f"  `{f['sample'][:160]}`"]
         out.append("")
     if took:
         out += [f"_{took}_"]

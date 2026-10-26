@@ -75,3 +75,18 @@ def test_summary_check_catches_invented_numbers_and_missing_names():
 def test_render_lists_every_critical_finding_even_if_the_summary_skips_it():
     md = brief.render(DIGEST, {"lines": "All quiet.\nKeep sleeping.", "by": "gemma4:e4b", "tries": 1})
     assert "Instance terminated" in md and "🔴" in md
+
+
+def test_deadlock_trace_names_the_kind_and_both_statements():
+    from pathlib import Path
+    from nightshift.traces import deadlock
+    d = deadlock((Path(__file__).parent / "data" / "deadlock_tx.trc").read_text())
+    assert d["kind"].startswith("row lock deadlock")
+    assert [(s["sid"], s["user"], s["sql"]) for s in d["sessions"]] == [
+        (230, "LAB", "update ns_dl set v = 2 where id = 1"), (42, "LAB", "update ns_dl set v = 2 where id = 2")]
+
+
+def test_deadlock_entry_keeps_its_trace_path():
+    found, _ = group(alert_entries("2026-10-25T22:47:51.770225+00:00\nFREEPDB1(3):ORA-00060: Deadlock detected. "
+                                   "More info in file /opt/oracle/diag/rdbms/free/FREE/trace/FREE_ora_56408.trc.\n"))
+    assert found[0].traces == ["/opt/oracle/diag/rdbms/free/FREE/trace/FREE_ora_56408.trc"]
