@@ -86,6 +86,7 @@ A target is a container (read with `docker exec`, so nothing gets installed next
 - **Honest caveats.**
   - These are lab nights, and the events are few: 2 instance terminations (a `shutdown abort` during setup on Oct 13, and the real crash on Oct 20), 3 nights with deadlocks, 1 full tablespace I caused on purpose, and 1 silent night.
   - I changed the prompt once after the first replay (it skipped deadlocks and quoted the digest's field names). That run is in `results/replay-v1.json`: 6/8. I also loosened one scoring pattern from "silent" to "silen" after Gemma wrote "alert log silence", which gave Night Shift one of its 7.
+  - A rerun with the final code, which adds the restart rule, scored 8/8 (`results/replay-v3.json`). The two lines vary a little from run to run, so the table keeps the lower number.
   - The four biggest nights didn't fit the 32K-token context I asked for, and Ollama cut them down to about 16K tokens. A bigger context would help the raw approach on those nights, at a cost in time and memory.
 
 ```bash
